@@ -13,7 +13,7 @@ export class AuthController {
     @Post('/sign-in')
     async createUser(@Body() userData: SignInDto) {
         try {
-            this.logger.log('Start sing in user')
+            this.logger.log('Start sign in user')
 
             const user = await this.authService.SignIn(userData)
 

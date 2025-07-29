@@ -2,7 +2,7 @@ import { UsersDocument, User } from '@/users/schema/users.schema';
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { UpdateUserDto } from '../dto/update-users.dto';
+import { UpdateUserDto, updateUser } from '../dto/update-users.dto';
 import { CreateUserDto } from '../dto/create-users.dto';
 
 @Injectable()
@@ -59,19 +59,31 @@ export class UserRepsitory {
 
     }
 
-    async update(uid: string, updateData: Partial<UpdateUserDto>): Promise<User> {
+    async updateUser({ user_uid, body }: { user_uid: string, body: updateUser }) {
         try {
-            this.logger.log(`Start update username in repository`);
-            const updateUser = await this.userModel.findOneAndUpdate({ uid }, updateData, { new: true });
-            if (!updateUser) {
-                this.logger.warn(`User not found with uid: ${uid}`);
-                throw new NotFoundException(`User not found`);
+            console.log('body', body)
+            if (body.username) {
+                const chackUsername = await this.userModel.findOne({ username: body?.username })
+                if (chackUsername && chackUsername.uid !== user_uid) {
+                    throw new InternalServerErrorException('Username already busy!')
+                }
             }
-            this.logger.debug(`Complate update username: ${JSON.stringify(updateUser?.username)}`);
-            return updateUser;
+            const user = await this.userModel.findOne({ uid: user_uid })
+            if (!user) throw new NotFoundException('User Not Found')
+
+            for (const key in body) {
+                if (body.hasOwnProperty(key)) {
+                    user[key] = body[key];
+                }
+            }
+            await user.save()
+            return {
+                message: 'User updated successfully',
+                user,
+            };
         } catch (error) {
-            this.logger.error(`Filed to update, data: ${JSON.stringify(updateData)}`, error.stack);
-            throw new InternalServerErrorException('Filed to update');
+            this.logger.error(`Filed to update, data`, error.stack);
+            throw new InternalServerErrorException(error.Message);
         }
     }
 
@@ -79,7 +91,22 @@ export class UserRepsitory {
     async getUserByUid(user_uid: string): Promise<any> {
         try {
             this.logger.log(`Start get user`)
-            const user = await this.userModel.findOne({ uid: user_uid }).select('username email uid avatar')
+            const user = await this.userModel.findOne({ uid: user_uid }).select('username email avatar address phone_number bio')
+            if (!user) {
+                this.logger.warn(`User not found: ${user_uid}`)
+                throw new NotFoundException('User not found!')
+            }
+            return user
+        } catch (error) {
+            this.logger.error(`Failed find user`)
+            throw new InternalServerErrorException(error.message)
+        }
+    }
+
+    async getUserByParam(user_uid: string): Promise<any> {
+        try {
+            this.logger.log(`Start get user`)
+            const user = await this.userModel.findOne({ uid: user_uid }).select('username email avatar address phone_number bio')
             if (!user) {
                 this.logger.warn(`User not found: ${user_uid}`)
                 throw new NotFoundException('User not found!')

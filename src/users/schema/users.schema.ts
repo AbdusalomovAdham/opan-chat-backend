@@ -14,24 +14,23 @@ export class User {
     @Prop({ required: true })
     password: string;
 
-    @Prop({ required: false })
+    @Prop()
     email?: string;
 
-    @Prop({ required: false })
+    @Prop()
     full_name?: string;
 
-    @Prop({ required: false })
     @Prop()
     avatar?: string;
 
-    @Prop({ required: false })
     @Prop()
-    token?: string
+    phone_number?: string;
 
-    @Prop({ required: false })
     @Prop()
-    phoneNumber?: string
+    address?: string;
 
+    @Prop()
+    bio?: string;
 }
 
 export const UsersSchema = SchemaFactory.createForClass(User);

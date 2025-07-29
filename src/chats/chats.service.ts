@@ -9,6 +9,7 @@ export class ChatsService {
         private readonly chatsRespository: ChatsRepository,
         private readonly jwtTokenService: JwtTokenService
     ) { }
+
     async getChats(authHeader: any) {
         try {
             this.logger.log(`Start get chats`)
@@ -18,6 +19,17 @@ export class ChatsService {
             return chatsList
         } catch (error) {
             this.logger.error(`Faild get chats`, error.stack)
+            throw new InternalServerErrorException(error.message)
+        }
+    }
+
+    async getAllMessages(authHeader: any, otherUserUid: string) {
+        try {
+            const verifToken = await this.jwtTokenService.verifyToken(authHeader)
+            const { sub } = verifToken
+            const messageList = await this.chatsRespository.getAllMessages(sub, otherUserUid)
+            return messageList
+        } catch (error) {
             throw new InternalServerErrorException(error.message)
         }
     }

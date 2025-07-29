@@ -25,15 +25,27 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsString()
-    phoneNumber?: string
+    phone_number?: string
 }
 
-export class updateUserPassword {
+export class updateUser {
     @IsOptional()
     @IsString()
-    phoneNumber: string
+    phone_number?: string;
 
+    @IsOptional()
     @IsString()
-    @MinLength(8)
-    password: string;
+    email?: string;
+
+    @IsOptional()
+    @IsString()
+    address?: string;
+
+    @IsOptional()
+    @IsString()
+    username?: string;
+
+    @IsOptional()
+    @IsString()
+    bio?: string;
 }

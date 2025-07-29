@@ -27,7 +27,11 @@ export class CreateUserDto {
 
     @IsOptional()
     @IsString()
-    phoneNumber?: string;
+    phone_number?: string;
+
+    @IsOptional()
+    @IsString()
+    bio?: string;
 }
 
 export class LoginUserDto {

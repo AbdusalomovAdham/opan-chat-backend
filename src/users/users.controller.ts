@@ -1,10 +1,9 @@
-import { Body, Controller, Get, HttpException, HttpStatus, InternalServerErrorException, Logger, Param, Patch, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpException, HttpStatus, Headers, InternalServerErrorException, Logger, Param, Patch, Post, Put, Query, Req, UseGuards, Header } from '@nestjs/common'
 import { UserService } from '@/users/users.service'
 import { AuthService } from '@/auth/auth.service'
 import { CreateUserDto, LoginUserDto } from './dto/create-users.dto'
-import { UpdateUserDto, updateUserPassword } from '@/users/dto/update-users.dto'
+import { UpdateUserDto, updateUser } from '@/users/dto/update-users.dto'
 import { User } from './schema/users.schema';
-import { JwtStrategy } from '@/auth/guards/jwt.strategy';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 
 @Controller('user')
@@ -27,32 +26,42 @@ export class UserController {
         }
     }
 
-    @Patch('update')
-    @UseGuards(JwtAuthGuard)
-    async updateUser(@Req() req, @Body() updateData: Partial<UpdateUserDto>) {
+    @Get('/info')
+    async getUserByUid(@Headers() headers: any) {
         try {
-            const uid = req.user.sub
-            this.logger.log('Start update user')
-            const user = await this.userService.updateUser(uid, updateData)
-            this.logger.debug(`Update user ${JSON.stringify(user.username)}`)
-            return user
+            const { authorization } = headers
+            console.log('userUid', authorization)
+            this.logger.log(`Start get user info: ${authorization}`)
+            const user = await this.userService.getUserByUid(authorization)
+            return { user }
         } catch (error) {
-            this.logger.error(`Update error user uid: ${updateData.username}`)
-            throw new HttpException({ messaege: error.message }, HttpStatus.BAD_REQUEST)
+            this.logger.error(`Error get user info`)
+            throw new InternalServerErrorException(error.Message)
         }
     }
 
-    @Get('info/:uid')
-    async getUserByUid(@Param('uid') userUid: string) {
+    @Get('/info/:uid')
+    async getUserByParam(@Param('uid') uid: string) {
         try {
-            // const { user_uid } = body
-            console.log('userUid', userUid)
-            this.logger.log(`Start get user info: ${userUid}`)
-            const user = await this.userService.getUserByUid(userUid)
+            console.log('uid', uid)
+            console.log('userUid', uid)
+            this.logger.log(`Start get user info: ${uid}`)
+            const user = await this.userService.getUserByParam(uid)
             return { user }
         } catch (error) {
-            this.logger.error(`Error get user info: ${userUid}`)
+            this.logger.error(`Error get user info`)
             throw new InternalServerErrorException(error.Message)
+        }
+    }
+
+    @Patch()
+    async editUser(@Headers() headers: any, @Body() body: updateUser) {
+        try {
+            const { authorization } = headers
+            const userUpdate = await this.userService.updateUser({ authorization, body })
+            return userUpdate
+        } catch (error) {
+            throw new InternalServerErrorException(error.message)
         }
     }
 

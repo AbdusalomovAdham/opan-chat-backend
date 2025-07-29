@@ -32,10 +32,11 @@ export class AuthService {
         }
     }
 
-    //  reg
+    //  sign in
     async SignIn(userData: SignInDto): Promise<{ token: string, user: any }> {
         try {
             const { username, password, email } = userData
+            console.log(username, password)
             this.logger.log(`Start register: ${username}`)
             const exists = await this.authModel.findOne({ username })
             if (exists) {
@@ -57,6 +58,7 @@ export class AuthService {
         }
     }
 
+    //  sign up
     async SignUp(userData: SignUpDto): Promise<{ token: string, user: User }> {
         this.logger.log(`Started logging`)
         try {
