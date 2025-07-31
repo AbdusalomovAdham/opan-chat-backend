@@ -25,6 +25,7 @@ export class ChatsService {
 
     async getAllMessages(authHeader: any, otherUserUid: string) {
         try {
+            console.log('token', authHeader)
             const verifToken = await this.jwtTokenService.verifyToken(authHeader)
             const { sub } = verifToken
             const messageList = await this.chatsRespository.getAllMessages(sub, otherUserUid)

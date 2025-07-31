@@ -31,7 +31,7 @@ export class CreateUserDto {
 
     @IsOptional()
     @IsString()
-    bio?: string;
+    biow?: string;
 }
 
 export class LoginUserDto {

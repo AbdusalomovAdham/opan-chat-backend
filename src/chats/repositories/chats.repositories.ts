@@ -41,34 +41,44 @@ export class ChatsRepository {
 
     async getAllMessages(user_uid: string, otherUserUid: string) {
         try {
-
-            const result = await this.participantModel.aggregate([
-                { $match: { user_uid: { $in: [user_uid, otherUserUid] } } },
+            const chat_uid = await this.participantModel.aggregate([
                 {
-                    $group: { _id: "$chat_uid", count: { $sum: 1 } }
+                    $match: { user_uid: { $in: [user_uid, otherUserUid] }, },
+                },
+                {
+                    $group: {
+                        _id: '$chat_uid', users: { $addToSet: '$user_uid' },
+                    },
                 },
                 {
                     $match: {
-                        count: 2
-                    }
-                }
-            ])
+                        users: { $all: [user_uid, otherUserUid] }, $expr: { $eq: [{ $size: '$users' }, 2] },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0, chat_uid: '$_id',
+                    },
+                },
+            ]);
 
-            const messages = await this.messageModel.find({ chat_uid: result[0]?._id })
-            const username = await this.userModel.find({ uid: otherUserUid }).select('username')
-            const messagesWithFlag = messages.map(msg => {
+            const messages = await this.messageModel.find({ chat_uid: chat_uid[0].chat_uid }).sort({ created_at: 1 });
+            console.log('messages', messages, chat_uid[0].chat_uid)
+            const otherUser = await this.userModel.findOne({ uid: otherUserUid }).select('username');
+
+            const messagesWithFlag = messages.map((msg) => {
                 const plain = msg.toObject();
                 return {
                     ...plain,
-                    username,
-                    my_message: plain.created_by === user_uid
+                    username: otherUser?.username,
+                    my_message: plain.created_by === user_uid,
                 };
             });
-
-            // console.log(messagesWithFlag)
-            return messagesWithFlag
+            console.log(messagesWithFlag)
+            return messagesWithFlag;
         } catch (error) {
-            throw new InternalServerErrorException(error.message)
+            throw new InternalServerErrorException(error.message);
         }
     }
+
 }

@@ -28,7 +28,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('join_room')
     handleJoinRoom(@MessageBody() data: { roomId: string, username: string }, @ConnectedSocket() client: Socket) {
-        console.log('data.roomId', data.roomId)
+        console.log('data.roomId', data)
         client.join(data.roomId)
         console.log(`${data.username} joined room ${data.roomId}`)
         client.to(data.roomId).emit('user_joined', { message: `${data.username} joined the room` })

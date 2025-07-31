@@ -27,12 +27,14 @@ export class UserController {
     }
 
     @Get('/info')
-    async getUserByUid(@Headers() headers: any) {
+    async getUserByUid(@Headers() headers: any): Promise<{ user: User }> {
         try {
+            this.logger.log(`Get user info started`)
             const { authorization } = headers
             console.log('userUid', authorization)
             this.logger.log(`Start get user info: ${authorization}`)
             const user = await this.userService.getUserByUid(authorization)
+            this.logger.debug(`Complate get user info: ${JSON.stringify(user.username)}`)
             return { user }
         } catch (error) {
             this.logger.error(`Error get user info`)
@@ -41,12 +43,11 @@ export class UserController {
     }
 
     @Get('/info/:uid')
-    async getUserByParam(@Param('uid') uid: string) {
+    async getUserByParam(@Param('uid') uid: string): Promise<{ user: User }> {
         try {
-            console.log('uid', uid)
-            console.log('userUid', uid)
             this.logger.log(`Start get user info: ${uid}`)
             const user = await this.userService.getUserByParam(uid)
+            this.logger.debug(`Complate user get info: ${JSON.stringify(user?.username)}`)
             return { user }
         } catch (error) {
             this.logger.error(`Error get user info`)
@@ -55,10 +56,12 @@ export class UserController {
     }
 
     @Patch()
-    async editUser(@Headers() headers: any, @Body() body: updateUser) {
+    async editUser(@Headers() headers: any, @Body() body: updateUser): Promise<{ userUpdate: updateUser }> {
         try {
+            this.logger.log(`Started update user`)
             const { authorization } = headers
             const userUpdate = await this.userService.updateUser({ authorization, body })
+            this.logger.debug(`Complate user info update`)
             return userUpdate
         } catch (error) {
             throw new InternalServerErrorException(error.message)

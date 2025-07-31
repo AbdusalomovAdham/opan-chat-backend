@@ -53,8 +53,8 @@ export class ChatService {
                 });
 
                 await newMessage.save();
-
-                return { message: 'Message saved in existing chat.' };
+                console.log('newMessage', newMessage)
+                return newMessage;
             }
 
             const newChatUid = uuidv4();
@@ -92,8 +92,8 @@ export class ChatService {
             });
 
             await newMessage.save();
-
-            return { message: 'New chat created and message saved.' };
+            console.log('newMessage', newMessage)
+            return newMessage
         } catch (error) {
             console.error('Error saving message:', error);
             throw error;
