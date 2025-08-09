@@ -4,12 +4,12 @@ import { JwtService } from "@nestjs/jwt";
 @Injectable()
 export class JwtTokenService {
     private logger = new Logger(JwtTokenService.name)
-    constructor(private jwtService: JwtService) { }
+    constructor(private readonly jwtService: JwtService) { }
 
     async singToken(uid: string, username: string) {
         try {
-            const payload = { sub: uid }
-            const token = this.jwtService.sign(payload)
+            const payload = { sub: uid, username }
+            const token = this.jwtService.sign(payload, { secret: 'SECRET_KEY' })
             this.logger.debug(`Genereted JWT Token with payload ${JSON.stringify(payload)} for username: ${username}`)
             return token
         } catch (error) {
@@ -20,15 +20,24 @@ export class JwtTokenService {
 
     async verifyToken(authHeader: string) {
         try {
-            this.logger.log(`Start verify token`)
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                throw new Error('Authorization header is missing or invalid')
+            }
             const token = authHeader.split(' ')[1]
-            const decoded = await this.jwtService.verify(token)
-            // console.log('decoded', decoded)
-            this.logger.debug(`Verfiyed token: ${token}`)
+            const decoded = await this.jwtService.verify(token, { secret: 'SECRET_KEY' })
+
+            this.logger.debug(`Verified token: ${token}`)
             return decoded
         } catch (error) {
-            this.logger.error(`Error verify token: ${authHeader}`)
+            if (error.name === 'TokenExpiredError') {
+                this.logger.warn('Token expired!')
+            } else if (error.name === 'JsonWebTokenError') {
+                this.logger.warn('Invalid token!')
+            }
+
+            this.logger.error(`Error verify token: ${authHeader}, error: ${error.message}`)
             throw new Error('The token is invalid or expired!')
         }
     }
+
 }

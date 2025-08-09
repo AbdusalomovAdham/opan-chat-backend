@@ -32,11 +32,10 @@ export class AuthService {
         }
     }
 
-    //  sign in
-    async SignIn(userData: SignInDto): Promise<{ token: string, user: any }> {
+    //  sign up
+    async SignUp(userData: SignInDto): Promise<{ token: string, user: any }> {
         try {
             const { username, password, email } = userData
-            console.log(username, password)
             this.logger.log(`Start register: ${username}`)
             const exists = await this.authModel.findOne({ username })
             if (exists) {
@@ -48,8 +47,7 @@ export class AuthService {
             const user = new this.authModel({ username, password: heshPassword, email: "", phone: "", address: "", uid, avatar: "", phone_number: "" })
             await user.save()
             this.logger.debug(`User save mongo DB: ${user.username}`)
-            const payload = { uid, username }
-            const token = this.jwtService.sign(payload)
+            const token = await this.jwtTokenService.singToken(user.uid, user.username)
             this.logger.debug(`Token created: ${username}`)
             return { token: token, user: user }
         } catch (error) {
@@ -59,7 +57,7 @@ export class AuthService {
     }
 
     //  sign up
-    async SignUp(userData: SignUpDto): Promise<{ token: string, user: User }> {
+    async SignIn(userData: SignUpDto): Promise<{ token: string, user: User }> {
         this.logger.log(`Started logging`)
         try {
             const { username, password } = userData

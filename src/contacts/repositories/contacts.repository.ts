@@ -15,7 +15,7 @@ export class ContactsRepository {
     ) { }
 
     // get contacts
-    async getContact(uid: any): Promise<any[]> {
+    async getContact(uid: any): Promise<any> {
         try {
             this.logger.log(`Start get all contacts: ${uid}`)
             const userUid = uid
@@ -46,6 +46,10 @@ export class ContactsRepository {
                 }
             ])
             this.logger.debug(`Complate get contacts`)
+
+            // if (!contacts) {
+            //     return { message: 'not contact yet' }
+            // }
             return contacts;
         } catch (error) {
             this.logger.error(`Filed get contacts`, error.stack)
@@ -54,12 +58,10 @@ export class ContactsRepository {
     }
 
     // create contact
-    async createContact({ uid, username }: { uid: any, username: string }): Promise<Contact> {
+    async createContact({ uid, username }: { uid: string, username: string }): Promise<Contact> {
         try {
             this.logger.log(`Create contact start: ${username}`);
-            const { sub } = uid
-            const userUid = sub;
-            console.log('userUid', uid)
+            const userUid = uid
             const findUser = await this.userModel.findOne({ username })
             const user = await this.userModel.findOne({ uid: userUid })
 
@@ -98,14 +100,11 @@ export class ContactsRepository {
     // delete contact
     async deleteContact({ contact_uid, user_uid }: { contact_uid: string, user_uid: string }) {
         try {
-            console.log('contact_uid-repositry', contact_uid)
-            console.log('user-id-repostory', user_uid)
             this.logger.log(`Start delete contact: ${contact_uid}`)
             const result = await this.contactModel.deleteOne({
                 contact_uid: contact_uid,
                 user_uid: user_uid
             })
-            console.log('result', result)
             if (result.deletedCount === 0) {
                 this.logger.warn(`No contact found to delete with uid: ${contact_uid}`)
                 throw new NotFoundException('Contact not found')

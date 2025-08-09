@@ -1,6 +1,6 @@
 import { ChatParticipant, ChatParticipantDocument } from '@/chat/schema/participant.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Injectable, InternalServerErrorException } from "@nestjs/common";
+import { Injectable, InternalServerErrorException, NotFoundException } from "@nestjs/common";
 import { User, UsersDocument } from '@/users/schema/users.schema';
 import { Chat, ChatDocument } from '@/chat/schema/chat.schema';
 import { Model } from 'mongoose';
@@ -62,19 +62,24 @@ export class ChatsRepository {
                 },
             ]);
 
-            const messages = await this.messageModel.find({ chat_uid: chat_uid[0].chat_uid }).sort({ created_at: 1 });
-            console.log('messages', messages, chat_uid[0].chat_uid)
-            const otherUser = await this.userModel.findOne({ uid: otherUserUid }).select('username');
-
+            if (chat_uid.length === 0) {
+                throw new NotFoundException('Messages no yet')
+            }
+            const messages = await this.messageModel.find({
+                chat_uid: chat_uid[0]?.chat_uid
+            }).sort({ created_at: 1 });
+            const otherUser = await this.userModel.findOne({ uid: otherUserUid }).select('username avatar');
             const messagesWithFlag = messages.map((msg) => {
                 const plain = msg.toObject();
                 return {
                     ...plain,
                     username: otherUser?.username,
+                    avatar: otherUser?.avatar,
                     my_message: plain.created_by === user_uid,
                 };
             });
-            console.log(messagesWithFlag)
+
+
             return messagesWithFlag;
         } catch (error) {
             throw new InternalServerErrorException(error.message);

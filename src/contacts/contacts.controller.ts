@@ -11,7 +11,6 @@ export class ContactsController {
     async getContacts(@Headers() headers: any): Promise<any> {
         try {
             const authHeader = headers?.authorization
-            console.log(authHeader)
             const contactsList = await this.contactsService.getContacts(authHeader)
             return contactsList
         } catch (error) {
@@ -27,7 +26,7 @@ export class ContactsController {
             this.logger.log(`Start create contact: ${username}`)
             const authHeader = headers?.authorization
             const createContact = await this.contactsService.createContact({ authHeader, username })
-            this.logger.debug(`Complate create contact ${createContact.uid}`)
+            // this.logger.debug(`Complate create contact ${createContact.uid}`)x
             return createContact
         } catch (error) {
             this.logger.error(`Failed create contact: ${dto.username}`)
@@ -38,10 +37,8 @@ export class ContactsController {
     @Delete()
     async deleteContac(@Body() body: any, @Headers() headers: any) {
         try {
-            console.log('body', body)
             const { contact_uid } = body
             this.logger.log(`Start delete contact: ${body.contact_uid}`)
-            console.log('contact_uid', contact_uid)
             const authHeader = headers?.authorization
             const deleteContact = await this.contactsService.deleteContact({ authHeader, contact_uid })
             this.logger.debug(`Complate delete contact: ${deleteContact}`)

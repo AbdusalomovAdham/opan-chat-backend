@@ -61,7 +61,6 @@ export class UserRepsitory {
 
     async updateUser({ user_uid, body }: { user_uid: string, body: updateUser }) {
         try {
-            console.log('body', body)
             if (body.username) {
                 const chackUsername = await this.userModel.findOne({ username: body?.username })
                 if (chackUsername && chackUsername.uid !== user_uid) {

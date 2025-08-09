@@ -1,11 +1,9 @@
 import { JwtTokenService } from './../auth/jwt/token.service';
-import { BadRequestException, HttpStatus, Inject, Injectable, InternalServerErrorException, Logger, NotFoundException, forwardRef, Body } from '@nestjs/common';
+import { Inject, Injectable, InternalServerErrorException, Logger, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UsersDocument } from './schema/users.schema';
-import { CreateUserDto } from './dto/create-users.dto';
 import { AuthService } from '@/auth/auth.service';
-import { v4 as uuidv4 } from 'uuid';
 import { RedisService } from '../redis/redis.service';
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto, updateUser } from '@/users/dto/update-users.dto';
@@ -68,7 +66,6 @@ export class UserService {
             const verifyToken = await this.jwtTokenService.verifyToken(authorization)
             const { sub } = verifyToken
             const user = await this.userRepository.getUserByUid(sub)
-            console.log('user', user)
             return user
         } catch (error) {
             this.logger.error(`Error get user info: ${authorization}`)
@@ -85,5 +82,13 @@ export class UserService {
             this.logger.error(`Error get user info: ${uid}`)
             throw new InternalServerErrorException(error.message)
         }
+    }
+
+    async updateAvatar(userUid: string, avatarPath: string) {
+        return this.userModel.findOneAndUpdate(
+            { uid: userUid },
+            { avatar: `http://localhost:3000/uploads/${avatarPath}` },
+            { new: true }
+        );
     }
 }

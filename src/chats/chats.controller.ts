@@ -11,7 +11,6 @@ export class ChatsController {
         try {
             this.logger.log(`Start get chats list`)
             const { authorization } = headers
-            // console.log('auth header', headers)
             const chatsList = await this.chatsService.getChats(authorization)
             this.logger.debug(`Complate get chats`)
             return chatsList

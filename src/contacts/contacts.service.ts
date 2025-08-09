@@ -17,8 +17,8 @@ export class ContactsService {
                 this.logger.warn(`Token not provided or invalid format`)
                 throw new UnauthorizedException('Token not provided or invalid format');
             }
-            const uid = await this.jwtTokenService.verifyToken(authHeader)
-            const contactList = await this.contactsRepository.getContact(uid.sub)
+            const verifyToken = await this.jwtTokenService.verifyToken(authHeader)
+            const contactList = await this.contactsRepository.getContact(verifyToken.sub)
             this.logger.debug(`Complate get all contacts`)
             return contactList
         } catch (error) {
@@ -34,8 +34,9 @@ export class ContactsService {
                 this.logger.warn(`Token not provided or invalid format`)
                 throw new UnauthorizedException('Token not provided or invalid format');
             }
-            const uid = await this.jwtTokenService.verifyToken(authHeader)
-            this.logger.log(`User uid: ${uid}`)
+            const verifyToken = await this.jwtTokenService.verifyToken(authHeader)
+            this.logger.log(`User uid: ${verifyToken.sub}`)
+            const uid = verifyToken.sub
             const contact = await this.contactsRepository.createContact({ username, uid })
             this.logger.debug(`Complate create contact: ${contact}`)
             return contact
@@ -50,8 +51,6 @@ export class ContactsService {
             this.logger.log(`Start delete contact: ${contact_uid}`)
             const verifyToken = await this.jwtTokenService.verifyToken(authHeader)
             const { sub } = verifyToken
-            console.log('contact_uid', contact_uid)
-            console.log('user_uid', verifyToken)
             const deleteContact = await this.contactsRepository.deleteContact({ user_uid: sub, contact_uid })
             this.logger.debug(`Complate delete contact: ${deleteContact}`)
             return { message: 'Delete contact!' }

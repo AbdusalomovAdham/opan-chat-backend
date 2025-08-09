@@ -6,6 +6,7 @@ import { Message, MessagesSchema } from "@/chat/schema/message.schema"
 import { AuthModule } from '@/auth/auth.module';
 import { Chat, ChatSchema } from './schema/chat.schema';
 import { ChatParticipant, ChatParticipantSchema } from './schema/participant.schema';
+import { FileUploadService } from '@/upload/upload.service';
 
 @Module({
     imports: [
@@ -16,8 +17,8 @@ import { ChatParticipant, ChatParticipantSchema } from './schema/participant.sch
         ]),
         AuthModule
     ],
-    providers: [ChatGateway, ChatService]
-
+    providers: [ChatGateway, ChatService, FileUploadService],
+    exports: [ChatService]
 })
 
 export class ChatModule { }

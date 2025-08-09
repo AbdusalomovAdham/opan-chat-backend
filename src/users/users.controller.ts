@@ -31,7 +31,6 @@ export class UserController {
         try {
             this.logger.log(`Get user info started`)
             const { authorization } = headers
-            console.log('userUid', authorization)
             this.logger.log(`Start get user info: ${authorization}`)
             const user = await this.userService.getUserByUid(authorization)
             this.logger.debug(`Complate get user info: ${JSON.stringify(user.username)}`)

@@ -17,8 +17,8 @@ import { JwtTokenService } from './jwt/token.service';
         }),
         JwtModule.registerAsync({
             useFactory: async () => ({
-                secret: process.env.JWT_SECRET,
-                signOptions: { expiresIn: process.env.EXPIRES_IN },
+                secret: 'SECRET_KEY',
+                signOptions: { expiresIn: '24h' },
             }),
         }),
         forwardRef(() => UsersModule),

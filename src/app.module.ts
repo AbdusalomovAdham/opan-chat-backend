@@ -8,6 +8,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ChatsModule } from './chats/chats.module';
 import { ContactsModule } from './contacts/contacts.module';
 import { ChatModule } from './chat/chat.module';
+import { CallGateway } from './call/call.gateway';
+import { CallService } from './call/call.service';
+import { CallModule } from './call/call.module';
+import { UploadModule } from './upload/upload.module';
 
 
 @Module({
@@ -27,7 +31,10 @@ import { ChatModule } from './chat/chat.module';
     RedisModule,
     ChatsModule,
     ContactsModule,
-    ChatModule
+    ChatModule,
+    CallModule,
+    UploadModule
   ],
+  providers: [CallGateway, CallService],
 })
 export class AppModule { }
