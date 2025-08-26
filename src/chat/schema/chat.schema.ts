@@ -6,8 +6,8 @@ export class Chat {
     @Prop({ required: false })
     created_by: string;
 
-    @Prop({ required: true })
-    users: string[];
+    @Prop({ required: false })
+    users: string;
 
     @Prop({ default: () => new Date() })
     created_at: Date;
@@ -17,6 +17,12 @@ export class Chat {
 
     @Prop({ required: false })
     type: 'GROUP' | 'P2P';
+
+    @Prop({ required: false })
+    avatar?: string
+
+    @Prop({ required: false })
+    group_name: string
 }
 
 export type ChatDocument = Chat & Document;

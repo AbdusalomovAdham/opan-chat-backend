@@ -23,11 +23,11 @@ export class ChatsService {
         }
     }
 
-    async getAllMessages(authHeader: any, otherUserUid: string) {
+    async getAllMessages(authHeader: any, chat_uid: string) {
         try {
             const verifToken = await this.jwtTokenService.verifyToken(authHeader)
-            const { sub } = verifToken
-            const messageList = await this.chatsRespository.getAllMessages(sub, otherUserUid)
+            const myUid = verifToken.sub
+            const messageList = await this.chatsRespository.getMessagesWithUser({ chat_uid, myUid })
             return messageList
         } catch (error) {
             throw new InternalServerErrorException(error.message)

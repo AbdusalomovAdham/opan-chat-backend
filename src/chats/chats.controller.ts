@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Logger, Headers, InternalServerErrorException, Param } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Headers, InternalServerErrorException, Param, UseGuards } from '@nestjs/common';
 import { ChatsService } from './chats.service';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 
 @Controller('chats')
 export class ChatsController {
@@ -7,6 +8,7 @@ export class ChatsController {
     constructor(private readonly chatsService: ChatsService) { }
 
     @Get()
+    @UseGuards(JwtAuthGuard)
     async getChats(@Headers() headers: any): Promise<any> {
         try {
             this.logger.log(`Start get chats list`)
@@ -22,6 +24,7 @@ export class ChatsController {
     }
 
     @Get('/messages/:uid')
+    @UseGuards(JwtAuthGuard)
     async getAllMessages(@Headers() headers: any, @Param('uid') uid: string) {
         try {
             const { authorization } = headers

@@ -5,7 +5,6 @@ import { User, UsersDocument } from '@/users/schema/users.schema';
 import { Model } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 import { Call, CallsDocument } from '../schema/call.schema';
-import { CallModule } from '../call.module';
 
 @Injectable()
 export class CallRepository {
@@ -17,6 +16,7 @@ export class CallRepository {
     async missedCall(callType: string, callerUid: string, reciverUid: string): Promise<{ message: string }> {
         try {
             const uid = uuidv4()
+            console.log('missed caller', callerUid, 'reciverUid', reciverUid)
             const missedCall = new this.callModel({
                 uid,
                 caller_uid: callerUid,
@@ -75,6 +75,7 @@ export class CallRepository {
 
     async getCalls(userUid: string): Promise<any[]> {
         try {
+            console.log('user uid', userUid)
             const calls = await this.callModel.find({
                 $or: [
                     { caller_uid: userUid },
@@ -82,22 +83,32 @@ export class CallRepository {
                 ]
             });
 
+            console.log('calls', calls)
             const userUids = new Set<string>();
             calls.forEach(call => {
-                const otherUid = call.caller_uid === userUid ? call.reciver_uid : call.caller_uid;
+                const otherUid = call.caller_uid === userUid ? call.reciver_uid : call.caller_uid
                 userUids.add(otherUid);
             });
 
-            const users = await this.userModel.find(
-                { uid: { $in: Array.from(userUids) } },
-                { uid: 1, username: 1, avatar: 1, _id: 0 }
-            );
+            console.log('userUid', userUid)
+            console.log('userUids', Array.from(userUids))
 
+            const arrayUserUids = Array.from(userUids)
+            const users = await this.userModel.find(
+                { uid: { $in: arrayUserUids } }
+            )
+
+            console.log('users info', users)
             const userMap = new Map(users.map(user => [user.uid, user]));
 
             const callsWithUsers = calls.map(call => {
                 const otherUid = call.caller_uid === userUid ? call.reciver_uid : call.caller_uid;
                 const user = userMap.get(otherUid);
+
+                if (!user) {
+                    console.log(`User not found for uid: ${otherUid}`);
+                }
+
                 return {
                     ...call.toObject(),
                     user: user || null

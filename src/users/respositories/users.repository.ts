@@ -4,12 +4,16 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { UpdateUserDto, updateUser } from '../dto/update-users.dto';
 import { CreateUserDto } from '../dto/create-users.dto';
+import { ChatParticipant, ChatParticipantDocument } from '@/chat/schema/participant.schema';
+import { Chat, ChatDocument } from '@/chat/schema/chat.schema';
 
 @Injectable()
 export class UserRepsitory {
     private logger = new Logger(UserRepsitory.name)
     constructor(
-        @InjectModel(User.name) private readonly userModel: Model<UsersDocument>
+        @InjectModel(User.name) private readonly userModel: Model<UsersDocument>,
+        @InjectModel(ChatParticipant.name) private readonly participantModel: Model<ChatParticipantDocument>,
+        @InjectModel(Chat.name) private readonly chatModel: Model<ChatDocument>
     ) { }
 
     async create(userData: Partial<CreateUserDto>): Promise<User> {
@@ -102,18 +106,43 @@ export class UserRepsitory {
         }
     }
 
-    async getUserByParam(user_uid: string): Promise<any> {
+    async getUserByParam(chat_uid: string, userUid: string): Promise<any> {
         try {
-            this.logger.log(`Start get user`)
-            const user = await this.userModel.findOne({ uid: user_uid }).select('username email avatar address phone_number bio')
-            if (!user) {
-                this.logger.warn(`User not found: ${user_uid}`)
-                throw new NotFoundException('User not found!')
+            this.logger.log(`Start get user for chat: ${chat_uid}`);
+            const participants = await this.participantModel.find({ chat_uid });
+            const checkGroup = await this.chatModel.findOne({ uid: chat_uid });
+            if (!checkGroup) {
+                throw new InternalServerErrorException('Not found chat!');
             }
-            return user
+
+            if (checkGroup?.type === 'P2P') {
+                const otherUserUids = participants
+                    .filter(p => p.user_uid !== userUid)
+                    .map(p => p.user_uid);
+
+                if (!otherUserUids.length) {
+                    return [];
+                }
+
+                const user = await this.userModel.find({
+                    uid: { $in: otherUserUids }
+                }).select('username email avatar address phone_number bio uid last_seen is_online')
+                return user
+            } else if (checkGroup?.type === 'GROUP') {
+                const membersCount = participants.length;
+
+                return [{
+                    group_name: checkGroup.group_name,
+                    avatar: checkGroup?.avatar,
+                    members_count: membersCount,
+                    type: 'GROUP'
+                }]
+            }
         } catch (error) {
-            this.logger.error(`Failed find user`)
-            throw new InternalServerErrorException(error.message)
+            this.logger.error(`Failed to find user: ${error.message}`);
+            throw new InternalServerErrorException(error.message);
         }
     }
+
+
 }

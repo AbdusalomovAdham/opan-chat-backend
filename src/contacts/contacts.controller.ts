@@ -1,6 +1,7 @@
-import { BadGatewayException, Controller, Get, Logger, Headers, Head, Body, Post, Delete, InternalServerErrorException } from '@nestjs/common';
+import { BadGatewayException, Controller, Get, Logger, Headers, Head, Body, Post, Delete, InternalServerErrorException, UseGuards } from '@nestjs/common';
 import { CreateContactDto } from './dto/create-contacts.dto';
 import { ContactsService } from './contacts.service';
+import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 
 @Controller('contacts')
 export class ContactsController {
@@ -8,6 +9,7 @@ export class ContactsController {
     constructor(private readonly contactsService: ContactsService) { }
 
     @Get()
+    @UseGuards(JwtAuthGuard)
     async getContacts(@Headers() headers: any): Promise<any> {
         try {
             const authHeader = headers?.authorization
@@ -20,13 +22,14 @@ export class ContactsController {
     }
 
     @Post()
+    @UseGuards(JwtAuthGuard)
     async createContac(@Body() dto: CreateContactDto, @Headers() headers: any) {
         try {
             const { username } = dto
             this.logger.log(`Start create contact: ${username}`)
             const authHeader = headers?.authorization
             const createContact = await this.contactsService.createContact({ authHeader, username })
-            // this.logger.debug(`Complate create contact ${createContact.uid}`)x
+            this.logger.debug(`Complate create contact ${createContact.uid}`)
             return createContact
         } catch (error) {
             this.logger.error(`Failed create contact: ${dto.username}`)
@@ -35,6 +38,7 @@ export class ContactsController {
     }
 
     @Delete()
+    @UseGuards(JwtAuthGuard)
     async deleteContac(@Body() body: any, @Headers() headers: any) {
         try {
             const { contact_uid } = body
@@ -48,5 +52,4 @@ export class ContactsController {
             throw new InternalServerErrorException(error.message)
         }
     }
-
 }

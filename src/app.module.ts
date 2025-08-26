@@ -12,6 +12,9 @@ import { CallGateway } from './call/call.gateway';
 import { CallService } from './call/call.service';
 import { CallModule } from './call/call.module';
 import { UploadModule } from './upload/upload.module';
+import { GroupController } from './group/group.controller';
+import { GroupService } from './group/group.service';
+import { GroupModule } from './group/group.module';
 
 
 @Module({
@@ -33,8 +36,10 @@ import { UploadModule } from './upload/upload.module';
     ContactsModule,
     ChatModule,
     CallModule,
-    UploadModule
+    UploadModule,
+    GroupModule,
   ],
-  providers: [CallGateway, CallService],
+  providers: [CallGateway, CallService, GroupService],
+  controllers: [GroupController],
 })
 export class AppModule { }

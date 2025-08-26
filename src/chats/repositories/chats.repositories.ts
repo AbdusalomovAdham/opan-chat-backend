@@ -15,75 +15,136 @@ export class ChatsRepository {
         @InjectModel(ChatParticipant.name) private readonly participantModel: Model<ChatParticipantDocument>,
     ) { }
 
-    async getChats({ uid }: { uid: string }): Promise<User[]> {
+    async getChats({ uid }: { uid: string }): Promise<any[]> {
         try {
             const userChats = await this.participantModel.find({ user_uid: uid });
             if (!userChats.length) return [];
+
             const chatUids = userChats.map(chat => chat.chat_uid);
-            const allParticipants = await this.participantModel.find({
-                chat_uid: { $in: chatUids },
+
+            const p2pChats = await this.chatModel.find({
+                uid: { $in: chatUids },
+                type: 'P2P',
             });
+            if (!p2pChats.length) return [];
+
+            const p2pChatUids = p2pChats.map(c => c.uid);
+
+            const allParticipants = await this.participantModel.find({
+                chat_uid: { $in: p2pChatUids },
+            });
+
             const otherUserUids = [
                 ...new Set(
                     allParticipants
                         .filter(p => p.user_uid !== uid)
-                        .map(p => p.user_uid)
+                        .map(p => p.user_uid),
                 ),
             ];
+
             const users = await this.userModel.find({
                 uid: { $in: otherUserUids },
-            });
-            return users;
-        } catch (error) {
-            throw new InternalServerErrorException(error.message);
-        }
-    }
+            }).select('-password');
 
-    async getAllMessages(user_uid: string, otherUserUid: string) {
-        try {
-            const chat_uid = await this.participantModel.aggregate([
-                {
-                    $match: { user_uid: { $in: [user_uid, otherUserUid] }, },
-                },
+            // 🔹 Last messages
+            const lastMessages = await this.messageModel.aggregate([
+                { $match: { chat_uid: { $in: p2pChatUids } } },
+                { $sort: { created_at: -1 } },
                 {
                     $group: {
-                        _id: '$chat_uid', users: { $addToSet: '$user_uid' },
-                    },
-                },
-                {
-                    $match: {
-                        users: { $all: [user_uid, otherUserUid] }, $expr: { $eq: [{ $size: '$users' }, 2] },
-                    },
-                },
-                {
-                    $project: {
-                        _id: 0, chat_uid: '$_id',
+                        _id: "$chat_uid",
+                        lastMessage: { $first: "$text" },
                     },
                 },
             ]);
 
-            if (chat_uid.length === 0) {
-                throw new NotFoundException('Messages no yet')
-            }
-            const messages = await this.messageModel.find({
-                chat_uid: chat_uid[0]?.chat_uid
-            }).sort({ created_at: 1 });
-            const otherUser = await this.userModel.findOne({ uid: otherUserUid }).select('username avatar');
-            const messagesWithFlag = messages.map((msg) => {
-                const plain = msg.toObject();
+            const chatToLastMessage = lastMessages.reduce((acc, m) => {
+                acc[m._id] = m.lastMessage;
+                return acc;
+            }, {} as Record<string, any>);
+
+            // 🔹 Unread counts
+            const unreadCounts = await this.messageModel.aggregate([
+                {
+                    $match: {
+                        chat_uid: { $in: p2pChatUids },
+                        is_read: false,
+                        sender_uid: { $ne: uid }, // o‘zing yuborgan xabar bo‘lmasin
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$chat_uid",
+                        unreadCount: { $sum: 1 },
+                    },
+                },
+            ]);
+
+            const chatToUnreadCount = unreadCounts.reduce((acc, m) => {
+                acc[m._id] = m.unreadCount;
+                return acc;
+            }, {} as Record<string, number>);
+
+            // 🔹 Chat UID mapping
+            const uidToChatUid = allParticipants.reduce((acc, p) => {
+                if (p.user_uid !== uid) {
+                    acc[p.user_uid] = p.chat_uid;
+                }
+                return acc;
+            }, {} as Record<string, string>);
+
+            // 🔹 Return users list with lastMessage + unreadCount
+            const usersList = users.map(user => {
+                const chatUid = uidToChatUid[user.uid];
                 return {
-                    ...plain,
-                    username: otherUser?.username,
-                    avatar: otherUser?.avatar,
-                    my_message: plain.created_by === user_uid,
+                    ...user.toObject(),
+                    chat_uid: chatUid || null,
+                    lastMessage: chatToLastMessage[chatUid] || null,
+                    unreadCount: chatToUnreadCount[chatUid] || 0, // ⬅️ qo‘shildi
                 };
             });
 
-
-            return messagesWithFlag;
+            return usersList;
         } catch (error) {
             throw new InternalServerErrorException(error.message);
         }
     }
+    
+    async getMessagesWithUser({ chat_uid, myUid }: { chat_uid: string, myUid: string }) {
+        try {
+            const chatUserUids = await this.participantModel.find({ chat_uid });
+            if (!chatUserUids.length) {
+                throw new InternalServerErrorException('Not found chat');
+            }
 
+            const chatUserUidMap = chatUserUids.map(chat => chat.user_uid);
+
+            // Foydalanuvchilarni olish
+            const chatUsersInfo = await this.userModel.find({
+                uid: { $in: chatUserUidMap },
+            }).select('username avatar uid -_id');
+
+            // xotirada tezroq topish uchun userlarni map qilib qo‘yamiz
+            const userMap = chatUsersInfo.reduce((acc, user) => {
+                acc[user.uid] = user;
+                return acc;
+            }, {} as Record<string, any>);
+
+            // Messagelarni olish
+            const chatMessageList = await this.messageModel.find({
+                chat_uid,
+            })
+
+            // Messagelarga user va my_message qo‘shish
+            const result = chatMessageList.map(msg => ({
+                ...msg.toObject(),
+                my_message: msg.created_by === myUid,
+                user: userMap[msg.created_by] || null,
+            }));
+
+            return result;
+        } catch (error) {
+            throw new InternalServerErrorException(error.message);
+        }
+    }
 }

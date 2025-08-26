@@ -26,6 +26,9 @@ const FileMetaSchema = SchemaFactory.createForClass(FileMeta)
 @Schema()
 export class Message {
     @Prop({ required: true })
+    uid: string;
+
+    @Prop({ required: true })
     chat_uid: string;
 
     @Prop({ required: false })
@@ -42,6 +45,9 @@ export class Message {
 
     @Prop({ required: false, type: FileMetaSchema })
     file?: FileMeta
+
+    @Prop({ required: true, default: false })
+    is_read: boolean
 }
 
 export const MessagesSchema = SchemaFactory.createForClass(Message)

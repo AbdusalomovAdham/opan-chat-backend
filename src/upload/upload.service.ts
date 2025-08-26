@@ -10,6 +10,7 @@ export class FileUploadService {
     constructor(private readonly chatService: ChatService) { }
     async saveFile(file: Express.Multer.File, authorization: string, message_type: string, user_uid: string, file_name: string) {
         const fileUrl = `/uploads/${file.filename}`
+        console.log('file', file)
         await this.chatService.saveFile(file_name, file.mimetype, file.size.toString(), message_type, user_uid, authorization, fileUrl)
         return {
             message: 'File yuklandi',

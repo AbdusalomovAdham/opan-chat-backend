@@ -7,13 +7,15 @@ import { AuthModule } from '@/auth/auth.module';
 import { Chat, ChatSchema } from './schema/chat.schema';
 import { ChatParticipant, ChatParticipantSchema } from './schema/participant.schema';
 import { FileUploadService } from '@/upload/upload.service';
+import { User, UsersSchema } from '@/users/schema/users.schema';
 
 @Module({
     imports: [
         MongooseModule.forFeature([
             { name: Message.name, schema: MessagesSchema },
             { name: Chat.name, schema: ChatSchema },
-            { name: ChatParticipant.name, schema: ChatParticipantSchema }
+            { name: ChatParticipant.name, schema: ChatParticipantSchema },
+            { name: User.name, schema: UsersSchema }
         ]),
         AuthModule
     ],

@@ -31,6 +31,12 @@ export class User {
 
     @Prop()
     bio?: string;
+
+    @Prop()
+    last_seen?: Date
+
+    @Prop()
+    is_online?: false
 }
 
 export const UsersSchema = SchemaFactory.createForClass(User);

@@ -73,10 +73,12 @@ export class UserService {
         }
     }
 
-    async getUserByParam(uid: string) {
+    async getUserByParam(uid: string, authorization: string) {
         try {
             this.logger.log(`Start get user: ${uid}`)
-            const user = await this.userRepository.getUserByParam(uid)
+            const verifyToken = await this.jwtTokenService.verifyToken(authorization)
+            const userUid = verifyToken.sub
+            const user = await this.userRepository.getUserByParam(uid, userUid)
             return user
         } catch (error) {
             this.logger.error(`Error get user info: ${uid}`)
@@ -87,7 +89,7 @@ export class UserService {
     async updateAvatar(userUid: string, avatarPath: string) {
         return this.userModel.findOneAndUpdate(
             { uid: userUid },
-            { avatar: `http://localhost:3000/uploads/${avatarPath}` },
+            { avatar: `/uploads/${avatarPath}` },
             { new: true }
         );
     }

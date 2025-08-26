@@ -9,6 +9,7 @@ import { User, AuthSchema } from './schema/auth.schema';
 import { RedisModule } from '@/redis/redis.module';
 import { AuthController } from './auth.controller';
 import { JwtTokenService } from './jwt/token.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Module({
     imports: [
@@ -29,7 +30,7 @@ import { JwtTokenService } from './jwt/token.service';
         RedisModule,
     ],
 
-    providers: [AuthService, JwtStrategy, JwtTokenService],
+    providers: [AuthService, JwtStrategy, JwtTokenService, JwtAuthGuard],
     exports: [AuthService, JwtTokenService],
     controllers: [AuthController]
 })
